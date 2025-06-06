@@ -1,0 +1,72 @@
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = [
+    "setuptools>=61.0",
+    "setuptools-scm",
+]
+
+[project]
+name = "seg-background"
+version = "0.0.1"
+description = "Python package to segment background from organ images using Segment Anything Model 2 (SAM2)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+
+authors = [
+    { name = "Joseph Brunet", email = "j.brunet@ucl.ac.uk" },
+]
+
+classifiers = [
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Environment :: Console",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+]
+
+keywords = [
+    "image segmentation",
+    "organ segmentation",
+    "sam2",
+    "medical imaging",
+    "background removal",
+]
+
+dependencies = [
+    "numpy>=1.20",
+    "opencv-python",
+    "scikit-image",
+    "sam2",
+    "decord",
+]
+
+[project.scripts]
+# Now points directly to seg_background/cli.py
+seg-background = "seg_background.cli:main"
+
+[project.urls]
+Issues = "https://github.com/JosephBrunet/seg-background/issues"
+Repository = "https://github.com/JosephBrunet/seg-background"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["seg_background*"]
+
+[tool.ruff]
+fix = true
+force-exclude = true
+lint.select = ["F", "I", "UP"]
+lint.mccabe.max-complexity = 10
+lint.pep8-naming.classmethod-decorators = ["classmethod", "pydantic.validator"]
+
+[tool.tomlsort]
+all = true
+spaces_indent_inline_array = 4
+trailing_comma_inline_array = true
+overrides."project.classifiers".inline_arrays = false

@@ -2,12 +2,12 @@
 
 `seg-background` is a simple command-line tool to segment background from organ image stacks using the Segment Anything Model 2 (SAM2). Given a folder of 2D TIFF or JP2 slices, it:
 
-1. Applies median filtering and intensity normalization.
-2. Builds forward/backward videos for SAM2 propagation.
-3. Runs SAM2 to generate a binary mask for each slice.
+1. Applies median filtering and intensity normalization.  
+2. Builds forward/backward videos for SAM2 propagation.  
+3. Runs SAM2 to generate a binary mask for each slice.  
 4. Saves masks under an output directory (`masks/mask_0000.png`, etc.).
 
-> **GPU Required:** SAM2 needs a CUDA-enabled NVIDIA GPU (CUDA ≥ 11.1).
+> **GPU Required:** SAM2 needs a CUDA-enabled NVIDIA GPU (CUDA ≥ 11.1).  
 
 ---
 
@@ -25,22 +25,38 @@
    source venv/bin/activate
    ```
 
-3. **Install**  
+3. **Install dependencies**  
    ```bash
    pip install --upgrade pip
    pip install .
    ```
 
-4. **Verify**  
+4. **Install SAM2**  
+   You must install SAM2 separately (the model code itself does not include checkpoints). For example:  
    ```bash
-   seg-background --help
+   git clone https://github.com/facebookresearch/sam2.git
+   cd sam2
+   pip install -e .
+   cd ../seg-background
    ```
-   You should see:
+
+5. **Download SAM2 checkpoints**  
+   The model weights are not stored in this repository (too large). Do the following:
+
+   - **Hugging Face** (example for “hiera-large”):  
+     ```bash
+     mkdir -p checkpoints
+     curl -L -o checkpoints/sam2.1_hiera_large.pt        https://huggingface.co/facebook/sam2-hiera-large/resolve/main/checkpoints/sam2.1_hiera_large.pt
+     ```  
+   Ensure the downloaded file lives at:
    ```
-   usage: seg-background [-h] [--output OUTPUT] im_dir
+   seg-background/
+   ├── checkpoints/
+   │   └── sam2.1_hiera_large.pt
    ```
 
 ---
+
 
 ## Usage
 

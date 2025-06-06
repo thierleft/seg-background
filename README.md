@@ -31,16 +31,7 @@
    pip install .
    ```
 
-4. **Install SAM2**  
-   You must install SAM2 separately (the model code itself does not include checkpoints). For example:  
-   ```bash
-   git clone https://github.com/facebookresearch/sam2.git
-   cd sam2
-   pip install -e .
-   cd ../seg-background
-   ```
-
-5. **Download SAM2 checkpoints**  
+4. **Download SAM2 checkpoints**  
    The model weights are not stored in this repository (too large). Do the following:
 
    - **Hugging Face** (example for “hiera-large”):  

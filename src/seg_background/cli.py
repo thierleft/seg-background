@@ -33,7 +33,8 @@ def main():
         type=int,
         nargs=2,
         default=(1, 99),
-        help="Percentile range for histogram adjustment as two integers (0,100)"
+        metavar=("LOW", "HIGH"),
+        help="Percentile range for histogram adjustment, e.g., 1 99"
     )
     args = parser.parse_args()
 

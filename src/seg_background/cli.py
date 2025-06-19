@@ -9,6 +9,9 @@ from sam2.build_sam import build_sam2_video_predictor
 
 import tkinter as tk
 
+import dask
+from alive_progress import alive_bar
+
 
 def get_screen_resolution():
     """Get the screen resolution using tkinter."""
@@ -86,13 +89,24 @@ def main():
         print(f"Error: No .tif/.jp2 files found in {im_dir}")
         return
 
-    stack = []
-    for f in tqdm(im_files, desc="Reading slices"):
-        img = cv2.imread(str(f), -1)
+    print(f"Reading {len(im_files)} slices in parallel...")
+
+    def read_slice(path):
+        img = cv2.imread(str(path), -1)
         if img is None:
-            print(f"Warning: Could not read {f.name}; skipping.")
-            continue
-        stack.append(img)
+            print(f"Warning: Could not read {path.name}; skipping.")
+            img = np.zeros((512, 512), dtype=np.uint8)  # or raise exception
+        return img
+
+    with alive_bar(len(im_files), title="Reading slices", length=40) as bar:
+        delayed_images = [
+            dask.delayed(lambda f=path: (bar(), read_slice(f))[1])()
+            for path in im_files
+        ]
+        da_stack = dask.compute(*delayed_images)
+        
+    stack = np.stack(da_stack, axis=0)
+
 
     if len(stack) == 0:
         print("Error: No valid images loaded. Exiting.")

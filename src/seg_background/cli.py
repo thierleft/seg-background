@@ -95,11 +95,11 @@ def main():
     if not (0 <= window[0] < window[1] <= 100):
         parser.error(f"Invalid --window range: {window}. Must satisfy 0 <= low < high <= 100.")
 
-    vmin = np.percentile(stack_np, window[0])
-    vmax = np.percentile(stack_np, window[1])
+    vmin = np.float32(np.percentile(stack_np, window[0]))
+    vmax = np.float32(np.percentile(stack_np, window[1]))
     stack_normalized = np.clip(
-        (stack_np - vmin) / (vmax - vmin) * 255, 0, 255
-    ).astype(np.uint8)
+        (stack_np.astype(np.float32) - vmin) / (vmax - vmin) * 255, 0, 255
+        ).astype(np.uint8)
 
     print("Applying 3D median filter...")
     stack_normalized = median_filter(stack_normalized, size=(3, 3, 3))

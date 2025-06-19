@@ -20,21 +20,24 @@
    ```
 
 2. **Create a Python 3.10+ virtual environment**
+   
    Note: you can also use [uv](astral.sh/uv).
+
    Note: you will need to install the Tkinter package with apt (e.g. `sudo apt install python3-tkinter` or `sudo apt install python3.10-tkinter`) prior to creating the virtual env; if you have already created it, you need to delete it and recreate.
+   
    ```bash
    python3 -m venv venv
    source venv/bin/activate
    ```
    
 
-4. **Install dependencies**  
+3. **Install dependencies**  
    ```bash
    pip install --upgrade pip
    pip install .
    ```
 
-5. **Download SAM2 checkpoints**  
+4. **Download SAM2 checkpoints**  
    The model weights are not stored in this repository (too large). Do the following:
 
    - **Hugging Face** (example for “hiera-large”):  

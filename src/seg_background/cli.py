@@ -8,22 +8,6 @@ from skimage.measure import block_reduce
 from scipy.ndimage import median_filter, label, binary_opening
 from sam2.build_sam import build_sam2_video_predictor
 
-import tkinter as tk
-
-import dask
-from alive_progress import alive_bar
-
-
-def get_screen_resolution():
-    """Get the screen resolution using tkinter."""
-    root = tk.Tk()
-    root.withdraw()
-    width = root.winfo_screenwidth()
-    height = root.winfo_screenheight()
-    return width, height
-
-
-
 
 def fill_2d_holes(volume):
     result = np.zeros_like(volume, dtype=np.uint8)
@@ -38,8 +22,16 @@ def fill_2d_holes(volume):
             labeled[:, 0].ravel(), labeled[:, -1].ravel()
         ]))
         background_mask = np.isin(labeled, border_labels)
-        result[i] = np.where(background_mask, 0, 1).astype(np.uint8)
+        filled = np.where(background_mask, 0, 1).astype(np.uint8)
+        result[i] = np.maximum(slice_,filled)
     return result
+
+def max_upsample(volume, factor, original_shape):
+    upsampled = np.repeat(volume, factor, axis=0)
+    upsampled = np.repeat(upsampled, factor, axis=1)
+    upsampled = np.repeat(upsampled, factor, axis=2)
+    return upsampled[:original_shape[0], :original_shape[1], :original_shape[2]]
+
 
 
 def main():
@@ -85,10 +77,9 @@ def main():
         print(f"Error: No .tif/.jp2 files found in {im_dir}")
         return
 
-    print(f"Reading {len(im_files)} slices in parallel...")
-
-    def read_slice(path):
-        img = cv2.imread(str(path), -1)
+    stack = []
+    for f in tqdm(im_files, desc="Reading slices"):
+        img = cv2.imread(str(f), -1)
         if img is None:
             print(f"Warning: Could not read {path.name}; skipping.")
             raise( ValueError(f"Could not read image {path.name}"))
@@ -152,32 +143,11 @@ def main():
     print(f"Loading SAM2 model from:\n  checkpoint: {checkpoint_path}\n  config:     {config_rel_path}")
     predictor = build_sam2_video_predictor(str(config_rel_path), str(checkpoint_path))
 
-    # ========== MIDDLE SLICE SELECTION ==========
-        
     print("Segmenting middle frame...")
     frame_bgr = cv2.cvtColor(stack_normalized[start_idx], cv2.COLOR_GRAY2BGR)
-
-    # Resize to fit screen
-    screen_w, screen_h = get_screen_resolution()
-    max_display_w = int(screen_w * 0.9)
-    max_display_h = int(screen_h * 0.9)
-    scale_w = max_display_w / frame_bgr.shape[1]
-    scale_h = max_display_h / frame_bgr.shape[0]
-    scale = min(scale_w, scale_h, 1.0)
-
-    display_frame = (
-        cv2.resize(frame_bgr, (int(frame_bgr.shape[1] * scale), int(frame_bgr.shape[0] * scale)))
-        if scale < 1.0 else frame_bgr
-    )
-
-    roi = cv2.selectROI("Select ROI on middle slice", display_frame, fromCenter=False, showCrosshair=True)
+    roi = cv2.selectROI("Select ROI on middle slice", frame_bgr, fromCenter=False, showCrosshair=True)
     cv2.destroyAllWindows()
-
     x, y, w, h = roi
-    x = int(x / scale)
-    y = int(y / scale)
-    w = int(w / scale)
-    h = int(h / scale)
     box = [x, y, x + w, y + h]
 
     # ========= FORWARD PROPAGATION ==========
@@ -219,7 +189,10 @@ def main():
     if args.fill_holes:
         print("Filling internal holes in 2D mask slices...")
         mask_stack_3d = fill_2d_holes(mask_stack_3d)
-
+        
+    if args.downsample:
+        print("Upsampling mask volume back to original resolution using max-style upsampling...")
+        mask_stack_3d = max_upsample(mask_stack_3d, args.downsample, original_shape)
 
     print("Smoothing and writing masks...")
     kernel = np.ones((3, 3), np.uint8)

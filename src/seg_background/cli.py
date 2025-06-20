@@ -91,7 +91,7 @@ def main():
         img = cv2.imread(str(path), -1)
         if img is None:
             print(f"Warning: Could not read {path.name}; skipping.")
-            continue # or raise exception
+            raise( ValueError(f"Could not read image {path.name}"))
         return img
 
     with alive_bar(len(im_files), title="Reading slices", length=40) as bar:

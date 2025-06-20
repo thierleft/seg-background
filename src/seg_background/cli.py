@@ -8,6 +8,8 @@ from skimage.measure import block_reduce
 from scipy.ndimage import median_filter, label, binary_opening
 from sam2.build_sam import build_sam2_video_predictor
 
+import dask
+from alive_progress import alive_bar
 
 def fill_2d_holes(volume):
     result = np.zeros_like(volume, dtype=np.uint8)
@@ -78,8 +80,8 @@ def main():
         return
 
     stack = []
-    for f in tqdm(im_files, desc="Reading slices"):
-        img = cv2.imread(str(f), -1)
+    def read_slice(path):
+        img = cv2.imread(str(path), -1)
         if img is None:
             print(f"Warning: Could not read {path.name}; skipping.")
             raise( ValueError(f"Could not read image {path.name}"))

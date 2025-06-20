@@ -44,6 +44,8 @@ dependencies = [
     "scikit-image",
     "sam2",
     "decord",
+    "dask",
+    "alive_progress",
 ]
 
 [project.scripts]

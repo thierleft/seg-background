@@ -103,9 +103,11 @@ def main():
         print("Error: No valid images loaded. Exiting.")
         return
 
-    stack_np = np.stack(stack, axis=0)
-    original_shape = stack_np.shape
-
+    if args.hoatools:
+        original_shape = stack_np.shape * 2
+    else:
+        original_shape = stack_np.shape
+        
     if args.downsample:
         print(f"Applying 3D downsampling by factor {args.downsample}...")
         block_size = (args.downsample,) * 3

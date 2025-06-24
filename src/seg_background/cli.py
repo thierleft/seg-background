@@ -110,7 +110,7 @@ def main():
     stack_np = np.stack(stack, axis=0)
     
     if args.hoatools:
-        original_shape = stack_np.shape * 2
+        original_shape = tuple(xx * 2 for xx in stack_np.shape)
     else:
         original_shape = stack_np.shape
 

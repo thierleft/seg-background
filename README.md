@@ -19,11 +19,17 @@
    cd seg-background
    ```
 
-2. **Create a Python 3.10+ virtual environment**  
+2. **Create a Python 3.10+ virtual environment**
+   
+   Note: you can also use [uv](astral.sh/uv).
+
+   Note: you will need to install the Tkinter package with apt (e.g. `sudo apt install python3-tk`) prior to creating the virtual env; if you have already created it, you need to delete it and recreate.
+   
    ```bash
    python3 -m venv venv
    source venv/bin/activate
    ```
+   
 
 3. **Install dependencies**  
    ```bash

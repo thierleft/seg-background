@@ -7,7 +7,8 @@ from pathlib import Path
 from skimage.measure import block_reduce
 from scipy.ndimage import median_filter, label, binary_opening
 from sam2.build_sam import build_sam2_video_predictor
-
+import dask
+from alive_progress import alive_bar
 
 def fill_2d_holes(volume):
     result = np.zeros_like(volume, dtype=np.uint8)
@@ -49,6 +50,7 @@ def main():
                         help="Fill holes in the final mask volume before upsampling")
     parser.add_argument("--hoatools", action="store_true", help="Use hoa_tools to load HiP-CT dataset")
     parser.add_argument("--datasetname", type=str, help="Name of dataset to load with hoa_tools")
+
     args = parser.parse_args()
 
     # ========= CONFIGURATION =========
@@ -77,6 +79,7 @@ def main():
 
     # ========== LOAD AND NORMALIZE STACK ==========
     print("Loading image stack...")
+
     stack = []
 
     if args.hoatools:
@@ -99,15 +102,18 @@ def main():
                 continue
             stack.append(img)
 
+        
     if len(stack) == 0:
         print("Error: No valid images loaded. Exiting.")
         return
-
+      
+    stack_np = np.stack(stack, axis=0)
+    
     if args.hoatools:
         original_shape = stack_np.shape * 2
     else:
         original_shape = stack_np.shape
-        
+
     if args.downsample:
         print(f"Applying 3D downsampling by factor {args.downsample}...")
         block_size = (args.downsample,) * 3
@@ -200,6 +206,7 @@ def main():
         factor = args.downsample if args.downsample else 2 
         print("Upsampling mask volume...")
         mask_stack_3d = max_upsample(mask_stack_3d, factor, original_shape)
+
 
     print("Smoothing and writing masks...")
     kernel = np.ones((3, 3), np.uint8)

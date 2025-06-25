@@ -19,7 +19,7 @@
    cd organ-masker
    ```
 
-2. **Create a Python 3.10+ virtual environment**
+2. **Create a Python 3.11+ virtual environment**
    
    Note: you can also use [uv](astral.sh/uv).
 

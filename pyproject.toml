@@ -6,11 +6,11 @@ requires = [
 ]
 
 [project]
-name = "seg-background"
+name = "organ-masker"
 version = "0.0.1"
 description = "Python package to segment background from organ images using Segment Anything Model 2 (SAM2)"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = { file = "LICENSE" }
 
 authors = [
@@ -46,19 +46,19 @@ dependencies = [
     "decord",
     "dask",
     "alive_progress",
+    "hoa_tools",
 ]
 
 [project.scripts]
-# Now points directly to seg_background/cli.py
-seg-background = "seg_background.cli:main"
+organ-masker = "organ_masker.cli:main"
 
 [project.urls]
-Issues = "https://github.com/JosephBrunet/seg-background/issues"
-Repository = "https://github.com/JosephBrunet/seg-background"
+Issues = "https://github.com/JosephBrunet/organ-masker/issues"
+Repository = "https://github.com/JosephBrunet/organ-masker"
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["seg_background*"]
+include = ["organ_masker*"]
 
 [tool.ruff]
 fix = true

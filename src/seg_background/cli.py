@@ -7,7 +7,6 @@ from pathlib import Path
 from skimage.measure import block_reduce
 from scipy.ndimage import median_filter, label, binary_opening
 from sam2.build_sam import build_sam2_video_predictor
-
 import dask
 from alive_progress import alive_bar
 
@@ -25,8 +24,9 @@ def fill_2d_holes(volume):
         ]))
         background_mask = np.isin(labeled, border_labels)
         filled = np.where(background_mask, 0, 1).astype(np.uint8)
-        result[i] = np.maximum(slice_,filled)
+        result[i] = np.maximum(slice_, filled)
     return result
+
 
 def max_upsample(volume, factor, original_shape):
     upsampled = np.repeat(volume, factor, axis=0)
@@ -35,11 +35,10 @@ def max_upsample(volume, factor, original_shape):
     return upsampled[:original_shape[0], :original_shape[1], :original_shape[2]]
 
 
-
 def main():
     # ========= PARSE ARGUMENTS =========
     parser = argparse.ArgumentParser(description="SAM2 segmentation with mask smoothing.")
-    parser.add_argument("im_dir", type=str, help="Path to directory with TIFF or JP2 slices")
+    parser.add_argument("im_dir", type=str, help="Path to directory with TIFF or JP2 slices (ignored if --hoatools)")
     parser.add_argument("--output", type=str, default=".", help="Path to output segmentation directory")
     parser.add_argument("--index", type=int, default=None, help="Index of starting slice")
     parser.add_argument("--window", type=int, nargs=2, default=(1, 99), metavar=("LOW", "HIGH"),
@@ -49,11 +48,17 @@ def main():
                         help="SAM2 model variant (default: small)")
     parser.add_argument("--fill-holes", action="store_true",
                         help="Fill holes in the final mask volume before upsampling")
+    parser.add_argument("--hoatools", action="store_true", help="Use hoa_tools to load HiP-CT dataset")
+    parser.add_argument("--datasetname", type=str, help="Name of dataset to load with hoa_tools")
+
     args = parser.parse_args()
 
     # ========= CONFIGURATION =========
-    im_dir = Path(args.im_dir)
-    seg_dir = Path(args.output) / "segmentation_SAM2"
+    if args.hoatools:
+        seg_dir = Path(args.output) / f"segmentation_SAM2_{args.datasetname}"
+    else:
+        im_dir = Path(args.im_dir)
+        seg_dir = Path(args.output) / f"segmentation_SAM2_{im_dir.name}"
     mask_output_dir = seg_dir / "masks"
     video_forward_path = seg_dir / "video_forward.mp4"
     video_backward_path = seg_dir / "video_backward.mp4"
@@ -74,35 +79,40 @@ def main():
 
     # ========== LOAD AND NORMALIZE STACK ==========
     print("Loading image stack...")
-    im_files = sorted([f for f in im_dir.iterdir() if f.suffix.lower() in [".tif", ".jp2"]])
-    if len(im_files) == 0:
-        print(f"Error: No .tif/.jp2 files found in {im_dir}")
-        return
 
     stack = []
-    def read_slice(path):
-        img = cv2.imread(str(path), -1)
-        if img is None:
-            print(f"Warning: Could not read {path.name}; skipping.")
-            raise( ValueError(f"Could not read image {path.name}"))
-        return img
 
-    with alive_bar(len(im_files), title="Reading slices", length=40) as bar:
-        delayed_images = [
-            dask.delayed(lambda f=path: (bar(), read_slice(f))[1])()
-            for path in im_files
-        ]
-        da_stack = dask.compute(*delayed_images)
+    if args.hoatools:
+        import hoa_tools.dataset as hoa_dataset
+        print(f"Using hoa_tools to load dataset '{args.datasetname}'...")
+        dataset = hoa_dataset.get_dataset(args.datasetname)
+        data_array = dataset.data_array(downsample_level=2)
+        for i in tqdm(range(data_array.sizes["z"]), desc="Loading slices from hoa_tools"):
+            slice_np = data_array.isel(z=i).values.astype(np.float32)
+            stack.append(slice_np)
+    else:
+        im_files = sorted([f for f in im_dir.iterdir() if f.suffix.lower() in [".tif", ".jp2"]])
+        if len(im_files) == 0:
+            print(f"Error: No .tif/.jp2 files found in {im_dir}")
+            return
+        for f in tqdm(im_files, desc="Reading slices"):
+            img = cv2.imread(str(f), -1)
+            if img is None:
+                print(f"Warning: Could not read {f.name}; skipping.")
+                continue
+            stack.append(img)
+
         
-    stack = np.stack(da_stack, axis=0)
-
-
     if len(stack) == 0:
         print("Error: No valid images loaded. Exiting.")
         return
-
+      
     stack_np = np.stack(stack, axis=0)
-    original_shape = stack_np.shape
+    
+    if args.hoatools:
+        original_shape = tuple(xx * 2 for xx in stack_np.shape)
+    else:
+        original_shape = stack_np.shape
 
     if args.downsample:
         print(f"Applying 3D downsampling by factor {args.downsample}...")
@@ -191,10 +201,12 @@ def main():
     if args.fill_holes:
         print("Filling internal holes in 2D mask slices...")
         mask_stack_3d = fill_2d_holes(mask_stack_3d)
-        
-    if args.downsample:
-        print("Upsampling mask volume back to original resolution using max-style upsampling...")
-        mask_stack_3d = max_upsample(mask_stack_3d, args.downsample, original_shape)
+
+    if args.downsample or args.hoatools:
+        factor = args.downsample if args.downsample else 2 
+        print("Upsampling mask volume...")
+        mask_stack_3d = max_upsample(mask_stack_3d, factor, original_shape)
+
 
     print("Smoothing and writing masks...")
     kernel = np.ones((3, 3), np.uint8)

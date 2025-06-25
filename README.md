@@ -1,6 +1,6 @@
-# seg-background
+# organ-masker
 
-`seg-background` is a simple command-line tool to segment background from organ image stacks using the Segment Anything Model 2 (SAM2). Given a folder of 2D TIFF or JP2 slices, it:
+`organ-masker` is a simple command-line tool to segment background from organ image stacks using the Segment Anything Model 2 (SAM2). Given a folder of 2D TIFF or JP2 slices, it:
 
 1. Applies median filtering and intensity normalization.  
 2. Builds forward/backward videos for SAM2 propagation.  
@@ -15,8 +15,8 @@
 
 1. **Clone and enter the repo**  
    ```bash
-   git clone https://github.com/JosephBrunet/seg-background.git
-   cd seg-background
+   git clone https://github.com/JosephBrunet/organ-masker.git
+   cd organ-masker
    ```
 
 2. **Create a Python 3.10+ virtual environment**
@@ -47,7 +47,7 @@
      ```  
    Ensure the downloaded file lives at:
    ```
-   seg-background/
+   organ-masker/
    ├── checkpoints/
    │   └── sam2.1_hiera_large.pt
    ```
@@ -58,7 +58,7 @@
 ## Usage
 
 ```bash
-seg-background /path/to/image_folder --output /path/to/results
+organ-masker /path/to/image_folder --output /path/to/results
 ```
 
 - **`/path/to/image_folder`**  

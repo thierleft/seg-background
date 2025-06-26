@@ -50,6 +50,9 @@ def main():
                         help="Fill holes in the final mask volume before upsampling")
     parser.add_argument("--hoatools", action="store_true", help="Use hoa_tools to load HiP-CT dataset")
     parser.add_argument("--datasetname", type=str, help="Name of dataset to load with hoa_tools")
+    parser.add_argument("--privatemetadatapath", type=str,
+                    help="Optional path to private hoa_tools metadata (only used with --hoatools)")
+
 
     args = parser.parse_args()
 
@@ -84,12 +87,20 @@ def main():
 
     if args.hoatools:
         import hoa_tools.dataset as hoa_dataset
+
+        if args.privatemetadatapath:
+            private_path = Path(args.privatemetadatapath)
+            print(f"Using private metadata from: {private_path}")
+            hoa_dataset.change_metadata_directory(private_path)
+
         print(f"Using hoa_tools to load dataset '{args.datasetname}'...")
         dataset = hoa_dataset.get_dataset(args.datasetname)
         data_array = dataset.data_array(downsample_level=2)
+
         for i in tqdm(range(data_array.sizes["z"]), desc="Loading slices from hoa_tools"):
             slice_np = data_array.isel(z=i).values.astype(np.float32)
             stack.append(slice_np)
+            
     else:
         im_files = sorted([f for f in im_dir.iterdir() if f.suffix.lower() in [".tif", ".jp2"]])
         if len(im_files) == 0:

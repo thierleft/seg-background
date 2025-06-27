@@ -36,6 +36,7 @@ keywords = [
     "sam2",
     "medical imaging",
     "background removal",
+    "dask",
 ]
 
 dependencies = [

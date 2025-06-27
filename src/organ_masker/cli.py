@@ -70,12 +70,19 @@ def main():
 
     # Model selection
     model_suffix = {"tiny": "t", "small": "s", "base": "b", "large": "l"}[args.model]
-    project_root = Path(__file__).parents[2].resolve()
+    this_file = Path(__file__).resolve()
+    project_root = this_file.parents[2]  # adjust if needed
     checkpoint_path = project_root / "checkpoints" / f"sam2.1_hiera_{args.model}.pt"
     config_rel_path = Path("configs") / "sam2.1" / f"sam2.1_hiera_{model_suffix}.yaml"
 
     if not checkpoint_path.exists():
-        raise FileNotFoundError(f"SAM2 checkpoint not found at {checkpoint_path!r}.")
+        print(f"Checkpoint not found at {checkpoint_path}. Trying to locate in project root...")
+        project_root = this_file.parents[0]  # adjust if needed
+        checkpoint_path = project_root / "checkpoints" / f"sam2.1_hiera_{args.model}.pt"
+        config_rel_path = Path("configs") / "sam2.1" / f"sam2.1_hiera_{model_suffix}.yaml"
+
+        if not checkpoint_path.exists():
+            raise FileNotFoundError(f"SAM2 checkpoint not found at {checkpoint_path}.")
 
     fps = 10
     os.makedirs(mask_output_dir, exist_ok=True)

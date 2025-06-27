@@ -40,16 +40,18 @@
 4. **Download SAM2 checkpoints**  
    The model weights are not stored in this repository (too large). Do the following:
 
-   - **Hugging Face** (example for “hiera-large”):  
+   - **Linux** (example for “hiera-large”):  
      ```bash
-     mkdir -p checkpoints
-     curl -L -o checkpoints/sam2.1_hiera_large.pt        https://dl.fbaipublicfiles.com/segment_anything_2/092824/sam2.1_hiera_large.pt
-     ```  
+     cd checkpoints
+     ./download_ckpts.sh
+     ```
+ 
    Ensure the downloaded file lives at:
    ```
    organ-masker/
    ├── checkpoints/
    │   └── sam2.1_hiera_large.pt
+   │   └── ...
    ```
 
 ---

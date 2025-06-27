@@ -102,16 +102,40 @@ def main():
             stack.append(slice_np)
             
     else:
+        # im_files = sorted([f for f in im_dir.iterdir() if f.suffix.lower() in [".tif", ".jp2"]])
+        # if len(im_files) == 0:
+        #     print(f"Error: No .tif/.jp2 files found in {im_dir}")
+        #     return
+        # for f in tqdm(im_files, desc="Reading slices"):
+        #     img = cv2.imread(str(f), -1)
+        #     if img is None:
+        #         print(f"Warning: Could not read {f.name}; skipping.")
+        #         continue
+        #     stack.append(img)
+        
+        from dask import delayed, compute
+
+        def read_image_delayed(filepath, update_bar):
+            img = cv2.imread(str(filepath), -1)
+            update_bar()
+            if img is None:
+                print(f"Warning: Could not read {filepath.name}; skipping.")
+                return None
+            return img
+
+
         im_files = sorted([f for f in im_dir.iterdir() if f.suffix.lower() in [".tif", ".jp2"]])
         if len(im_files) == 0:
             print(f"Error: No .tif/.jp2 files found in {im_dir}")
             return
-        for f in tqdm(im_files, desc="Reading slices"):
-            img = cv2.imread(str(f), -1)
-            if img is None:
-                print(f"Warning: Could not read {f.name}; skipping.")
-                continue
-            stack.append(img)
+
+        print(f"Reading {len(im_files)} slices in parallel with Dask...")
+
+        with alive_bar(len(im_files), title="Loading Slices") as bar:
+            delayed_tasks = [delayed(read_image_delayed)(f, bar) for f in im_files]
+            computed_slices = compute(*delayed_tasks)
+
+        stack = [img for img in computed_slices if img is not None]
 
         
     if len(stack) == 0:

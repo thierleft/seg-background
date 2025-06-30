@@ -29,15 +29,8 @@
    python3 -m venv venv
    source venv/bin/activate
    ```
-   
 
-3. **Install dependencies**  
-   ```bash
-   pip install --upgrade pip
-   pip install .
-   ```
-
-4. **Download SAM2 checkpoints**  
+3. **Download SAM2 checkpoints**  
    The model weights are not stored in this repository (too large). Do the following:
 
    - **Linux** (example for “hiera-large”):  
@@ -53,6 +46,22 @@
    │   └── sam2.1_hiera_large.pt
    │   └── ...
    ```
+
+4. **Install dependencies**  
+   Come back to main package directory:
+     ```bash
+     cd ..
+     ```
+    Install package:
+    ```bash
+    pip install --upgrade pip
+    pip install .
+    ```
+
+5. **Check installation**  
+    ```bash
+    organ-masker -h
+    ```
 
 ---
 

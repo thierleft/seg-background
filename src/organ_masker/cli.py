@@ -140,6 +140,9 @@ def main():
       
     stack_np = np.stack(stack, axis=0)
     
+    original_shape = stack_np.shape[1:] # Get the shape of the first slice
+
+    
     if args.hoatools:
         original_shape = tuple(xx * 2 for xx in stack_np.shape)
     else:
@@ -278,6 +281,7 @@ def main():
         avg = np.mean(neighbors, axis=0)
         smoothed = (avg > 0.5).astype(np.uint8)
         dilated = cv2.dilate(smoothed, kernel, iterations=1) * 255
+        dilated = cv2.resize(dilated, (original_shape[2], original_shape[1]), interpolation=cv2.INTER_NEAREST)
         out_path = mask_output_dir / f"mask_{i:04d}.png"
         cv2.imwrite(str(out_path), dilated)
 

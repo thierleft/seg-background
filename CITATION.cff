@@ -1,9 +1,8 @@
-# CITATION.cff
 cff-version: 1.2.0
-message: "If you use this software, please cite it using the metadata below."
+message: "If you use this software, please cite it as below."
 title: "organ-masker: A command-line tool for background segmentation of image volumes using SAM2"
 version: "1.0.0"
-date-released: 2025-08-25
+date-released: 2025-08-27
 authors:
   - family-names: Brunet
     given-names: Joseph
@@ -15,6 +14,8 @@ authors:
   - family-names: Chestnutt
     given-names: Lisa
 repository-code: "https://github.com/HiPCTProject/organ-masker"
+doi: "10.5281/zenodo.16967995"
+url: "https://doi.org/10.5281/zenodo.16967995"
 license: MIT
 type: software
 keywords:

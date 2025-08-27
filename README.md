@@ -1,5 +1,7 @@
 # organ-masker
 
+[![DOI](https://zenodo.org/badge/997322638.svg)](https://doi.org/10.5281/zenodo.16967994)
+
 `organ-masker` is a simple command-line tool to segment background from organ image stacks using the Segment Anything Model 2 (SAM2). Given a folder of 2D TIFF or JP2 slices, it:
 
 1. Applies median filtering and intensity normalization.  

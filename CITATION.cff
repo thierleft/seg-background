@@ -14,8 +14,8 @@ authors:
   - family-names: Chestnutt
     given-names: Lisa
 repository-code: "https://github.com/HiPCTProject/organ-masker"
-doi: "10.5281/zenodo.16967995"
-url: "https://doi.org/10.5281/zenodo.16967995"
+doi: "10.5281/zenodo.16967994"
+url: "https://doi.org/10.5281/zenodo.16967994"
 license: MIT
 type: software
 keywords:

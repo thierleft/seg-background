@@ -150,14 +150,14 @@ organ-masker E:\data\Kidney_1\raw_slices --output E:\results\Kidney_1_reuse --re
 organ-masker --hoatools --datasetname K292_kidney_complete-organ_10.22um_bm18 --privatemetadatapath E:/thierry/private-hoa-metadata/metadata1 --hoa-downsample-level 1 --output E:\results\Kidney_1_hoa --roi-mode box --forward-only
 ```
 
-### Orthogonal predictions (YZ and XZ)
+### Orthogonal predictions (YZ and XZ) with majority merging
 ```bash
-organ-masker E:\data\Kidney_1\raw_slices --output E:\results\Kidney_1_orth --orthogonal --roi-mode box --roi-slice 512 --forward-only
+organ-masker E:\data\Kidney_1\raw_slices --output E:\results\Kidney_1_orth --orthogonal --merge-orth majority --roi-mode box --roi-slice 512 --forward-only
 ```
 
-### Specific orthogonal plane (XZ only)
+### Specific orthogonal plane (XZ only) with union merging
 ```bash
-organ-masker E:\data\Kidney_1\raw_slices --output E:\results\Kidney_1_xz --orthogonal-planes xz --roi-mode box --roi-slice 400 --forward-only
+organ-masker E:\data\Kidney_1\raw_slices --output E:\results\Kidney_1_xz --orthogonal-planes xz --merge-orth union --roi-mode box --roi-slice 400 --forward-only
 ```
 
 ### Automated reuse without GUI

@@ -8,7 +8,10 @@ from skimage.measure import block_reduce
 from scipy.ndimage import median_filter, label, binary_opening
 from sam2.build_sam import build_sam2_video_predictor
 import dask
+from dask import delayed, compute
 from alive_progress import alive_bar
+from screeninfo import get_monitors
+
 
 def fill_2d_holes(volume):
     result = np.zeros_like(volume, dtype=np.uint8)
@@ -70,12 +73,19 @@ def main():
 
     # Model selection
     model_suffix = {"tiny": "t", "small": "s", "base": "b", "large": "l"}[args.model]
-    project_root = Path(__file__).parents[2].resolve()
+    this_file = Path(__file__).resolve()
+    project_root = this_file.parents[2]  # adjust if needed
     checkpoint_path = project_root / "checkpoints" / f"sam2.1_hiera_{args.model}.pt"
     config_rel_path = Path("configs") / "sam2.1" / f"sam2.1_hiera_{model_suffix}.yaml"
 
     if not checkpoint_path.exists():
-        raise FileNotFoundError(f"SAM2 checkpoint not found at {checkpoint_path!r}.")
+        print(f"Checkpoint not found at {checkpoint_path}. Trying to locate in project root...")
+        project_root = this_file.parents[0]  # adjust if needed
+        checkpoint_path = project_root / "checkpoints" / f"sam2.1_hiera_{args.model}.pt"
+        config_rel_path = Path("configs") / "sam2.1" / f"sam2.1_hiera_{model_suffix}.yaml"
+
+        if not checkpoint_path.exists():
+            raise FileNotFoundError(f"SAM2 checkpoint not found at {checkpoint_path}.")
 
     fps = 10
     os.makedirs(mask_output_dir, exist_ok=True)
@@ -102,16 +112,26 @@ def main():
             stack.append(slice_np)
             
     else:
+        def read_image_delayed(filepath, update_bar):
+            img = cv2.imread(str(filepath), -1)
+            update_bar()
+            if img is None:
+                print(f"Warning: Could not read {filepath.name}; skipping.")
+                return None
+            return img
+
         im_files = sorted([f for f in im_dir.iterdir() if f.suffix.lower() in [".tif", ".jp2"]])
         if len(im_files) == 0:
             print(f"Error: No .tif/.jp2 files found in {im_dir}")
             return
-        for f in tqdm(im_files, desc="Reading slices"):
-            img = cv2.imread(str(f), -1)
-            if img is None:
-                print(f"Warning: Could not read {f.name}; skipping.")
-                continue
-            stack.append(img)
+
+        print(f"Reading {len(im_files)} slices in parallel with Dask...")
+
+        with alive_bar(len(im_files), title="Loading Slices") as bar:
+            delayed_tasks = [delayed(read_image_delayed)(f, bar) for f in im_files]
+            computed_slices = compute(*delayed_tasks)
+
+        stack = [img for img in computed_slices if img is not None]
 
         
     if len(stack) == 0:
@@ -119,6 +139,9 @@ def main():
         return
       
     stack_np = np.stack(stack, axis=0)
+    
+    original_shape = stack_np.shape[1:] # Get the shape of the first slice
+
     
     if args.hoatools:
         original_shape = tuple(xx * 2 for xx in stack_np.shape)
@@ -142,7 +165,7 @@ def main():
     stack_normalized = np.clip((stack_np - vmin) / (vmax - vmin) * 255, 0, 255).astype(np.uint8)
 
     print("Applying 3D median filter after normalization...")
-    stack_normalized = median_filter(stack_normalized, size=(3, 3, 3))
+    # stack_normalized = median_filter(stack_normalized, size=(3, 3, 3))
 
     height, width = stack_normalized.shape[1:]
     start_idx = len(stack_normalized) // 2 if index is None else index
@@ -167,11 +190,39 @@ def main():
     predictor = build_sam2_video_predictor(str(config_rel_path), str(checkpoint_path))
 
     print("Segmenting middle frame...")
-    frame_bgr = cv2.cvtColor(stack_normalized[start_idx], cv2.COLOR_GRAY2BGR)
-    roi = cv2.selectROI("Select ROI on middle slice", frame_bgr, fromCenter=False, showCrosshair=True)
+    frame = stack_normalized[start_idx]
+    frame_bgr = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
+
+    # Get screen dimensions
+    monitor = get_monitors()[0]
+    screen_w, screen_h = monitor.width, monitor.height
+
+    # Compute scaling only if needed (reserve a bit of margin, e.g. 90%)
+    margin = 0.7
+    scale = min(
+        (screen_w * margin) / frame_bgr.shape[1],
+        (screen_h * margin) / frame_bgr.shape[0],
+        1.0  # Do not upscale
+    )
+
+    if scale < 1.0:
+        resized_bgr = cv2.resize(frame_bgr, (int(frame_bgr.shape[1]*scale), int(frame_bgr.shape[0]*scale)))
+        roi_resized = cv2.selectROI("Select ROI (resized to fit screen)", resized_bgr, fromCenter=False, showCrosshair=True)
+        x, y, w, h = roi_resized
+        x = int(x / scale)
+        y = int(y / scale)
+        w = int(w / scale)
+        h = int(h / scale)
+    else:
+        roi = cv2.selectROI("Select ROI", frame_bgr, fromCenter=False, showCrosshair=True)
+        x, y, w, h = roi
+
     cv2.destroyAllWindows()
-    x, y, w, h = roi
     box = [x, y, x + w, y + h]
+
+
+
+
 
     # ========= FORWARD PROPAGATION ==========
     print("Propagating forward...")
@@ -230,6 +281,7 @@ def main():
         avg = np.mean(neighbors, axis=0)
         smoothed = (avg > 0.5).astype(np.uint8)
         dilated = cv2.dilate(smoothed, kernel, iterations=1) * 255
+        dilated = cv2.resize(dilated, (original_shape[2], original_shape[1]), interpolation=cv2.INTER_NEAREST)
         out_path = mask_output_dir / f"mask_{i:04d}.png"
         cv2.imwrite(str(out_path), dilated)
 

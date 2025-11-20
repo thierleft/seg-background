@@ -1,5 +1,7 @@
 # organ-masker
 
+[![DOI](https://zenodo.org/badge/997322638.svg)](https://doi.org/10.5281/zenodo.16967994)
+
 `organ-masker` is a simple command-line tool to segment background from organ image stacks using the Segment Anything Model 2 (SAM2). Given a folder of 2D TIFF or JP2 slices, it:
 
 1. Applies median filtering and intensity normalization.  
@@ -19,7 +21,7 @@
    cd organ-masker
    ```
 
-2. **Create a Python 3.10+ virtual environment**
+2. **Create a Python 3.11+ virtual environment**
    
    Note: you can also use [uv](astral.sh/uv).
 
@@ -29,28 +31,39 @@
    python3 -m venv venv
    source venv/bin/activate
    ```
-   
 
-3. **Install dependencies**  
-   ```bash
-   pip install --upgrade pip
-   pip install .
-   ```
-
-4. **Download SAM2 checkpoints**  
+3. **Download SAM2 checkpoints**  
    The model weights are not stored in this repository (too large). Do the following:
 
-   - **Hugging Face** (example for “hiera-large”):  
+   - **Linux** (example for “hiera-large”):  
      ```bash
-     mkdir -p checkpoints
-     curl -L -o checkpoints/sam2.1_hiera_large.pt        https://dl.fbaipublicfiles.com/segment_anything_2/092824/sam2.1_hiera_large.pt
-     ```  
+     cd checkpoints
+     ./download_ckpts.sh
+     ```
+ 
    Ensure the downloaded file lives at:
    ```
    organ-masker/
    ├── checkpoints/
    │   └── sam2.1_hiera_large.pt
+   │   └── ...
    ```
+
+4. **Install dependencies**  
+   Come back to main package directory:
+     ```bash
+     cd ..
+     ```
+    Install package:
+    ```bash
+    pip install --upgrade pip
+    pip install .
+    ```
+
+5. **Check installation**  
+    ```bash
+    organ-masker -h
+    ```
 
 ---
 

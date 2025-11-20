@@ -36,6 +36,8 @@ keywords = [
     "sam2",
     "medical imaging",
     "background removal",
+    "dask",
+    "screeninfo",
 ]
 
 dependencies = [
@@ -48,6 +50,12 @@ dependencies = [
     "alive_progress",
     "hoa_tools",
 ]
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.package-data]
+"*" = ["checkpoints/*.pt", "configs/sam2.1/*.yaml"]
 
 [project.scripts]
 organ-masker = "organ_masker.cli:main"

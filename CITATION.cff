@@ -1,0 +1,25 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "organ-masker: A command-line tool for background segmentation of image volumes using SAM2"
+version: "1.0.0"
+date-released: 2025-08-27
+authors:
+  - family-names: Brunet
+    given-names: Joseph
+    orcid: "https://orcid.org/0000-0002-8424-9510"
+  - family-names: Lefebvre
+    given-names: Thierry
+  - family-names: Chourrout
+    given-names: Matthieu
+  - family-names: Chestnutt
+    given-names: Lisa
+repository-code: "https://github.com/HiPCTProject/organ-masker"
+doi: "10.5281/zenodo.16967994"
+url: "https://doi.org/10.5281/zenodo.16967994"
+license: MIT
+type: software
+keywords:
+  - segmentation
+  - SAM2
+  - organ imaging
+  - HiP-CT
